@@ -1,12 +1,7 @@
-data=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015.csv",header=T,sep=",",row.names=1)
-datacopy=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015.csv",header=F,sep=",",row.names=1)
-
-testdata=load("/Users/Wildsoap/Desktop/NewData.RData")
-
 dataFinal=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015Final.csv",header=T,sep=",",row.names=1)
 dataFinalNum=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015Final.csv",header=F,sep=",",row.names=1)
 
-data=subset(dataFinal,select=c(5,6,7,8,9,10,12,13,14,15))
+data=subset(dataFinal,select=c(3,12,13,14,15,16,17,18))
 
 #data$Dystopia.Residual=subset(dataAlphabetisation,select=c(1))
 
@@ -19,35 +14,29 @@ str(data)
 
 #On transforme les variables qualitatives en quantitaves
 
-data$Happiness.Score=as.character(data$Happiness.Score)
-data$Happiness.Score=as.numeric(data$Happiness.Score)
+data$Bonheur=as.character(data$Bonheur)
+data$Bonheur=as.numeric(data$Bonheur)
 
-data$Standard.Error=as.character(data$Standard.Error)
-data$Standard.Error=as.numeric(data$Standard.Error)
+data$Democratie=as.character(data$Democratie)
+data$Democratie=as.numeric(data$Democratie)
 
-data$Economy..GDP.per.Capita. =as.character(data$Economy..GDP.per.Capita. )
-data$Economy..GDP.per.Capita. =as.numeric(data$Economy..GDP.per.Capita. )
+data$Belliqueux=as.character(data$Belliqueux)
+data$Belliqueux=as.numeric(data$Belliqueux)
 
-data$Family=as.character(data$Family)
-data$Family=as.numeric(data$Family)
+data$Alphabetisation=as.character(data$Alphabetisation)
+data$Alphabetisation=as.numeric(data$Alphabetisation)
 
-data$Health..Life.Expectancy.=as.character(data$Health..Life.Expectancy.)
-data$Health..Life.Expectancy.=as.numeric(data$Health..Life.Expectancy.)
+data$PIB=as.character(data$PIB)
+data$PIB=as.numeric(data$PIB)
 
-data$Freedom=as.character(data$Freedom)
-data$Freedom=as.numeric(data$Freedom)
+data$EsperanceDeVie=as.character(data$EsperanceDeVie)
+data$EsperanceDeVie=as.numeric(data$EsperanceDeVie)
 
-data$Trust..Government.Corruption.=as.character(data$Trust..Government.Corruption.)
-data$Trust..Government.Corruption.=as.numeric(data$Trust..Government.Corruption.)
-
-data$Generosity=as.character(data$Generosity)
-data$Generosity=as.numeric(data$Generosity)
-
-data$Dystopia.Residual=as.character(data$Dystopia.Residual)
-data$Dystopia.Residual=as.numeric(data$Dystopia.Residual)
+data$Liberalisme=as.character(data$Liberalisme)
+data$Liberalisme=as.numeric(data$Liberalisme)
 
 #data$Country=as.character(data$Country)
-data$Region=as.factor(data$Region)
+#data$Region=as.factor(data$Region)
 
 
 str(data)
@@ -67,129 +56,232 @@ require(glmnet)
 
 #Nombre de pays que l'on analyse (il y en a 194 d'après l'ONU)
 n=NROW(data)
-
-#Voilà les indices surlesquelles nous allons nous concentrer
-#Afin d'évaluer leur importances, nous avons réalisé un boxplot
-
-#boxData=subset(data,select=c(6,7,8,9,10,11))
-
-#boxplot(boxData)
-
-
-#############################ARBRE CART######################################
-
-arbreData=subset(data,select=c(5,6,7,8,9,10))
-
-arbre=rpart(Freedom~.,arbreData)
-
-#print(arbre)
-#plotcp(arbre)
-#summary(arbre)
-
-rpart.plot(arbreLiberté,type=4)
-
-arbre=rpart(Freedom~.,arbreData)
-
-
+n
 ###########################ACP#######################################
 
-dataOutRank=subset(data,select=c(6,7,8,9,10))
+#dataOutRank=subset(data,select=c(6,7,8,9,10))
 
-pca <- PCA(dataOutRank,scale.unit=F)
+pca <- PCA(data,scale.unit=F)
 
 #On passe au log car sinon c'est illisible
 
-dataOutRank[dataOutRank==0]=0.001 
-tab=log(dataOutRank)
+data[data==0]=0.001 
+tab=log(data)
 data2=t(scale(t(tab)))
 pca2 <- PCA(data2)
+
+#Bien expliquer l'opposition Alphabétisation/Espérance de Vie
+#Faire un classement de l'alphabétisation (en tête il y a les anciens pays du bloc de l'est)
+
+#On retire démocratie et bonheur car pas assez bien représenté
+
+dataACP3=subset(data,select=c(3,4,5,6,7,8))
+
+dataACP3[dataACP3==0]=0.001 
+tab=log(dataACP3)
+data2=t(scale(t(tab)))
+pca2 <- PCA(data2)
+
+#On fait un ACP qu'entre bonheur et démocratie
+
+dataACP4=subset(data,select=c(1,2))
+
+pca2 <- PCA(dataACP4)
+
+#On n'observe qu'un petit lien entre bonheur et démocratie
 
 
 ##############################CAH############################
 
-dataOutRank.cr = scale(dataOutRank,center=T,scale=T)
-dist.dataOutRank.cr <- dist(dataOutRank.cr)
-cah.ward.cr <- hclust(dist.dataOutRank.cr,method="ward.D2")
+data.cr = scale(data,center=T,scale=T)
+dist.data.cr <- dist(data.cr)
+cah.ward.cr <- hclust(dist.data.cr,method="ward.D2")
 
 plot(cah.ward.cr,hang =-1)
 barplot(cah.ward.cr$height)
 
-#A la louche, on va garder K=3 classes
+#A la louche, on va garder K=4 classes
 
-K=3
+K=4
 
 plot(cah.ward.cr,hang =-1,main="ward.D2")      
-rect.hclust(cah.ward.cr,k=3)
+rect.hclust(cah.ward.cr,k=4)
 
 #liste des groupes
-groupes.3 <- cutree(cah.ward.cr,k=3)
-groupes.3
-table(groupes.3)
+groupes.4 <- cutree(cah.ward.cr,k=4)
+
+sort(groupes.4)
+I=which(groupes.4==4)
+I
+
+
+#Inde et la Chine relativement à part
+
+#Essayons avec K=6 classes
+
+K=6
+
+plot(cah.ward.cr,hang =-1,main="ward.D2")      
+rect.hclust(cah.ward.cr,k=6)
+
+#liste des groupes
+groupes.6 <- cutree(cah.ward.cr,k=6)
+
+sort(groupes.6)
+I3=which(groupes.6==3)
+I3
+
+#Groupe 3 : Petit pays avec un fort PIB
+
+I1=which(groupes.6==1)
+I1
+
+#Pays développés, majoritairement européen
+
+
+I4=which(groupes.6==4)
+I4
+
+
+
+#Pays Autoritaire
+
+I5=which(groupes.6==5)
+I5
+
+
+
+#Pays peu développés
+
+I6=which(groupes.6==6)
+I6
+
+#Inde et Chine, vraiment à part
+
+
+
 
 
 #################################KMEANS#######################################
 
-kmeans.result <- kmeans(dataOutRank.cr,centers=K,nstart=100)
+kmeans.result <- kmeans(data,centers=K,nstart=100)
 
-pairs(dataOutRank, col=kmeans.result$cluster )
+pairs(data, col=kmeans.result$cluster )
 
-#Afficher les 3 groupes trouvé par le Kmeans sur une carte
+#Afficher les 6 groupes trouvé par le Kmeans sur une carte
 
-#####################################################################
+#############################ARBRE CART######################################
 
-library(MASS)
+#arbreData=subset(data,select=c(5,6,7,8,9,10))
 
-newData=subset(data,select=c(1,5,6,7,8,9,10))
-str(newData)
-table(newData$Region)
+#Étudions le bonheur, selon vous qu'est ce qui est important pour être heureux (selon nos variables) ? 
 
-newData$Region=as.character(newData$Region)
-str(newData)
+arbreBonheur=rpart(Bonheur~.,data))#,control=rpart.control(cp=0.016))
 
-#Les groupes de régions sont trop petits, on va en fusionner certains
+#print(arbre)
+plotcp(arbreBonheur) #On ne va pas l'élaguer car on veut voir les paramètres qui influencent le bonheur
+#summary(arbre)
 
-newData$Region[newData$Region == "Eastern Asia"] <- "Asia"
-newData$Region[newData$Region == "Southern Asia"] <- "Asia"
-newData$Region[newData$Region == "Southeastern Asia"] <- "Asia"
+rpart.plot(arbreBonheur,type=4)
 
-newData$Region[newData$Region == "North America"] <- "Western Europe and North America and Oceania"
-newData$Region[newData$Region == "Australia and New Zealand"] <- "Western Europe and North America and Oceania"
-newData$Region[newData$Region == "Western Europe"] <- "Western Europe and North America and Oceania"
+#L'argent ne fait pas le bonheur, mais il y contribue
+#L'espérance de vie est plus déterminante pout le bonheur
 
-newData$Region=as.factor(newData$Region)
-table(newData$Region)
 
-#newData$Region=as.character(newData$Region)
-#dataSupervisee = newData[newData$Region !="North America" && newData$Region!="Australia and New Zealand"]
-#dataSupervisee = newData[newData$Region!="Australia and New Zealand"]
-#dataSupervisee$Region=as.factor(dataSupervisee$Region)
-#table(dataSupervisee$Region)
+arbreDemocratie=rpart(Democratie~.,data,control=rpart.control(cp=0.034))
+
+plotcp(arbreDemocratie)
+
+rpart.plot(arbreDemocratie,type=4)
+
+#Une démocratie fait moins de morts, car moins de guerre, et est plus compatible avec la démocratie
+
+
+arbrePIB=rpart(PIB~.,data,control=rpart.control(cp=0.013))
+
+plotcp(arbrePIB)
+
+rpart.plot(arbrePIB,type=4)
+
+#Le libéralisme amène du PIB, mais aussi qu'au bout se sont toujours les petits pays qui auront plus de PIB
+
+
+
+
+############################CLASSIFICATION SUPERVISEE : DEMOCRATIE########################################
+
+#On va transformer nos indices de démocratie en une variable qualitative
+
+dataDemocratie=subset(data)
+
+head(dataDemocratie)
+str(dataDemocratie)
+
+
+dataDemocratie$Democratie[dataDemocratie$Democratie>=8] <- "Démocratie Pleine"
+dataDemocratie$Democratie[dataDemocratie$Democratie<4] <-"Régime Autoritaire"
+dataDemocratie$Democratie[dataDemocratie$Democratie<6] <-"Régime Hybride"
+dataDemocratie$Democratie[dataDemocratie$Democratie<8] <-"Démocratie Imparfaite"
+
+#On vérifie que les changements ont bien eu lieu
+table(dataDemocratie$Democratie)
+
+str(dataDemocratie)
+
+dataDemocratie$Democratie=as.factor(dataDemocratie$Democratie)
+
+str(dataDemocratie)
+
+
+#####################################LDA/QDA######################################
 
 set.seed(42)
-#n <- nrow(dataSupervisee)
-#p <- ncol(dataSupervisee)-1
-n <- nrow(newData)
-p <- ncol(newData)-1
+n <- nrow(dataDemocratie)
+p <- ncol(dataDemocratie)-1
 test.ratio <- .2 # ratio of test/train samples
 n.test <- round(n*test.ratio)
 tr <- sample(1:n,n.test)
-data.test <- newData[tr,]
-data.train <- newData[-tr,]
+data.test <- dataDemocratie[tr,]
+data.train <- dataDemocratie[-tr,]
 
-res_lda <- lda(Region~.,data=data.train)
-res_qda <- qda(Region~.,data=data.train)
+res_lda <- lda(Democratie~.,data=data.train)
+res_qda <- qda(Democratie~.,data=data.train)
 
 class_lda <- predict(res_lda,newdata=data.test)$class
 class_qda <- predict(res_qda,newdata=data.test)$class
 
-table(class_lda, data.test$Region)
+table(class_lda, data.test$Democratie)
 
-table(class_qda, data.test$Region)
+table(class_qda, data.test$Democratie)
 
-accuracy_lda = mean(class_lda == data.test$Region)
-accuracy_qda = mean(class_qda == data.test$Region)
+accuracy_lda = mean(class_lda == data.test$Democratie)
+accuracy_qda = mean(class_qda == data.test$Democratie)
 accuracy_lda
 accuracy_qda
+
+#Mauvais résultats, on ne peut pas conclure
+
+
+################################RANDOM FOREST################################
+
+library(randomForest)
+
+fit_RF <- randomForest(Democratie~.,data.train)
+fit_RF
+plot(fit_RF)
+
+class_RF= predict(fit_RF, newdata=data.test,  type="response")
+
+table(class_RF, data.test$Democratie)
+
+accuracy_RF = mean(class_RF == data.test$Democratie)
+accuracy_RF
+
+#On a aussi de mauvais résultats avec randomForest
+#Cela montre que les régimes politiques ne dépend pas des variables que l'on a fixé
+#Il y a très probablement aussi un aspect historique derrière
+
+
 
 ##########################COURBE ROC LDA/QDA####################################
 
@@ -209,20 +301,6 @@ predictions_qda <- prediction(pred_qda,  data.test$DIFF)
 perf_qda <- performance(predictions_qda , "tpr", "fpr" )
 plot(perf_qda, add=TRUE, col="red")
 
-################################RANDOM FOREST################################
-
-library(randomForest)
-
-fit_RF <- randomForest(Region~.,data.train)
-fit_RF
-plot(fit_RF)
-
-class_RF= predict(fit_RF, newdata=data.test,  type="response")
-
-table(class_RF, data.test$Region)
-
-accuracy_RF = mean(class_RF == data.test$Region)
-accuracy_RF
 
 
 ############################REGRESSION LOGISTIQUE######################
