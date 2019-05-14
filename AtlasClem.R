@@ -1,7 +1,14 @@
-data=read.csv2("/Users/Wildsoap/Documents/MAIN4/Bonheur/2015.csv",header=T,sep=",",row.names=1)
-datacopy=read.csv2("/Users/Wildsoap/Documents/MAIN4/Bonheur/2015.csv",header=F,sep=",",row.names=1)
+data=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015.csv",header=T,sep=",",row.names=1)
+datacopy=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015.csv",header=F,sep=",",row.names=1)
 
 testdata=load("/Users/Wildsoap/Desktop/NewData.RData")
+
+dataFinal=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015Final.csv",header=T,sep=",",row.names=1)
+dataFinalNum=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015Final.csv",header=F,sep=",",row.names=1)
+
+data=subset(dataFinal,select=c(5,6,7,8,9,10,12,13,14,15))
+
+#data$Dystopia.Residual=subset(dataAlphabetisation,select=c(1))
 
 ####################################NETTOYAGE DU DATASET####################################
 
