@@ -214,32 +214,46 @@ I6
 #Inde et Chine, vraiment à part
 
 
+meansGroupes <- matrix(NA, nrow=K, ncol=dim(data)[2])
+colnames(meansGroupes)=colnames(data)
+for (i in 1:K) meansGroupes[i,]<- colMeans(data[groupes.6==i,])
+meansGroupes
+
+par(mfrow=c(2,2))
+barplot(meansGroupes[,"Bonheur"],main="Moyenne de bonheur par groupes du CAH",xlab="Groupes",ylab="Bonheur",col=brewer.pal(n=6,name="Set1"))
+
+barplot(meansGroupes[,"Democratie"],main="Moyenne de democratie par groupes du CAH",xlab="Groupes",ylab="Democratie",col=brewer.pal(n=6,name="Set1"))
+
+barplot(meansGroupes[,"Population"],main="Moyenne de population par groupes du CAH",xlab="Groupes",ylab="Population",col=brewer.pal(n=6,name="Set1"))
+
+barplot(meansGroupes[,"PIB"],main="Moyenne de PIB par groupes du CAH",xlab="Groupes",ylab="PIB",col=brewer.pal(n=6,name="Set1"))
+par(mfrow=c(1,1))
+
+
 #################################KMEANS#######################################
 
-kmeans.result <- kmeans(data,centers=K,nstart=100)
+#On utilise le kmeans du package factoextra
+#Car il permet de tracer la courbe des silhouettes facilement
+
+inertie.intra <- rep(0,times=20)
+for (k in 1:10){
+  #On ne s'occupe pas de l'inertie intra pour k<3
+  inertie.intra[k] =0
+  if k>3 :
+    kmeans.result <- eclust(data, "kmeans", k = k,nstart = 100, graph = FALSE)
+    inertie.intra[k] <- kmeans.result$tot.withinss/kmeans.result$totss
+}
+# graphique de l'inertie, afin de choisir le nombre de classes optimales
+plot(1:20,inertie.intra,type="b",xlab="Nb. de groupes",ylab="% inertie intra")
+
+kmeans.result <- eclust(data, "kmeans", k = 7,nstart = 100, graph = FALSE)
 
 pairs(data, col=kmeans.result$cluster)
 
 plot(pca2, choix="ind", col.ind=kmeans.result$cluster, cex=pca2$ind$cos2)
 
-#Afficher les 6 groupes trouvé par le Kmeans sur une carte
 
-#Faire des histogrammes des caractéristiques de chaque groupes
-
-meansGroupes <- matrix(NA, nrow=K, ncol=dim(data)[2])
-colnames(meansGroupes)=colnames(data)
-for (i in 1:K) meansGroupes[i,]<- colMeans(data[kmeans.result$cluster==i,])
-meansGroupes
-
-par(mfrow=c(2,2))
-barplot(meansGroupes[,"Bonheur"],main="Moyenne de bonheur par groupes du Kmeans",xlab="Groupes",ylab="Bonheur",col=brewer.pal(n=6,name="Set1"))
-
-barplot(meansGroupes[,"Democratie"],main="Moyenne de democratie par groupes du Kmeans",xlab="Groupes",ylab="Democratie",col=brewer.pal(n=6,name="Set1"))
-
-barplot(meansGroupes[,"Population"],main="Moyenne de population par groupes du Kmeans",xlab="Groupes",ylab="Population",col=brewer.pal(n=6,name="Set1"))
-
-barplot(meansGroupes[,"PIB"],main="Moyenne de PIB par groupes du Kmeans",xlab="Groupes",ylab="PIB",col=brewer.pal(n=6,name="Set1"))
-par(mfrow=c(1,1))
+fviz_silhouette(kmeans.result)
 
 
 #############################ARBRE CART######################################
