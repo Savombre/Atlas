@@ -1,5 +1,19 @@
+require(rpart)
+require(rpart.plot)
+require(FactoMineR)
+require(MASS)
+require(ROCR)
+require(gplots)
+require(randomForest)
+require(glmnet)
+require(car)
+require(RColorBrewer)
+require(factoextra)
+require(ape)
+require(corrplot)
+
+###################################CHARGEMENT DES DONNEES##############################
 dataFinal=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015Final.csv",header=T,sep=",",row.names=1)
-dataFinalNum=read.csv2("/Users/Wildsoap/Documents/MAIN4/Atlas/2015Final.csv",header=F,sep=",",row.names=1)
 
 data=subset(dataFinal,select=c(3,12,13,14,15,16,17,18))
 
@@ -45,15 +59,7 @@ attach(data)
 
 ############################################################################
 
-require(rpart)
-require(rpart.plot)
-require(FactoMineR)
-require(MASS)
-require(ROCR)
-require(gplots)
-require(randomForest)
-require(glmnet)
-require(car)
+
 
 #Nombre de pays que l'on analyse (il y en a 194 d'après l'ONU)
 n=NROW(data)
@@ -72,6 +78,20 @@ tab=log(data)
 data2=t(scale(t(tab)))
 pca2 <- PCA(data2)
 
+eig.val <- get_eigenvalue(pca2)
+eig.val
+
+fviz_eig(pca2, addlabels = TRUE, ylim = c(0, 50))
+
+
+
+#On peut donc voir quelles axes représente le mieux quelle variable
+var <- get_pca_var(pca2)
+
+corrplot(var$cos2, is.corr=FALSE)
+
+#On pourrait garder entre 2, et 3 axes
+
 #Bien expliquer l'opposition Alphabétisation/Espérance de Vie
 #Faire un classement de l'alphabétisation (en tête il y a les anciens pays du bloc de l'est)
 
@@ -82,13 +102,13 @@ dataACP3=subset(data,select=c(3,4,5,6,7,8))
 dataACP3[dataACP3==0]=0.001 
 tab=log(dataACP3)
 data2=t(scale(t(tab)))
-pca2 <- PCA(data2)
+pca3 <- PCA(data2)
 
 #On fait un ACP qu'entre bonheur et démocratie
 
 dataACP4=subset(data,select=c(1,2))
 
-pca2 <- PCA(dataACP4)
+pca4 <- PCA(dataACP4)
 
 #On n'observe qu'un petit lien entre bonheur et démocratie
 
@@ -153,6 +173,12 @@ K=6
 plot(cah.ward.cr,hang =-1,main="ward.D2")      
 rect.hclust(cah.ward.cr,k=6)
 
+#Meilleure visualisation : 
+colors = c("red", "blue", "green", "black","purple","orange")
+clus4 = cutree(cah.ward.cr, 6)
+plot(as.phylo(cah.ward.cr), type = "fan", tip.color = colors[clus4],
+     label.offset = 1, cex = 0.5)
+
 #liste des groupes
 groupes.6 <- cutree(cah.ward.cr,k=6)
 
@@ -188,16 +214,33 @@ I6
 #Inde et Chine, vraiment à part
 
 
-
-
-
 #################################KMEANS#######################################
 
 kmeans.result <- kmeans(data,centers=K,nstart=100)
 
-pairs(data, col=kmeans.result$cluster )
+pairs(data, col=kmeans.result$cluster)
+
+plot(pca2, choix="ind", col.ind=kmeans.result$cluster, cex=pca2$ind$cos2)
 
 #Afficher les 6 groupes trouvé par le Kmeans sur une carte
+
+#Faire des histogrammes des caractéristiques de chaque groupes
+
+meansGroupes <- matrix(NA, nrow=K, ncol=dim(data)[2])
+colnames(meansGroupes)=colnames(data)
+for (i in 1:K) meansGroupes[i,]<- colMeans(data[kmeans.result$cluster==i,])
+meansGroupes
+
+par(mfrow=c(2,2))
+barplot(meansGroupes[,"Bonheur"],main="Moyenne de bonheur par groupes du Kmeans",xlab="Groupes",ylab="Bonheur",col=brewer.pal(n=6,name="Set1"))
+
+barplot(meansGroupes[,"Democratie"],main="Moyenne de democratie par groupes du Kmeans",xlab="Groupes",ylab="Democratie",col=brewer.pal(n=6,name="Set1"))
+
+barplot(meansGroupes[,"Population"],main="Moyenne de population par groupes du Kmeans",xlab="Groupes",ylab="Population",col=brewer.pal(n=6,name="Set1"))
+
+barplot(meansGroupes[,"PIB"],main="Moyenne de PIB par groupes du Kmeans",xlab="Groupes",ylab="PIB",col=brewer.pal(n=6,name="Set1"))
+par(mfrow=c(1,1))
+
 
 #############################ARBRE CART######################################
 
@@ -263,6 +306,11 @@ dataDemocratie$Democratie=as.factor(dataDemocratie$Democratie)
 
 str(dataDemocratie)
 
+#Proportion des régimes
+pie(table(dataDemocratie$Democratie))
+#Peu de démocratie pleine, et beaucoup de régimes autoritaires
+
+
 ##############################QUELQUES BOXPLOT###############################
 
 boxplot(dataDemocratie$PIB~dataDemocratie$Democratie)
@@ -279,15 +327,47 @@ boxplot(dataDemocratie$Bonheur~dataDemocratie$Democratie)
 
 dataBonheurPolitique=subset(dataDemocratie)
 
-dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur>=6.5] <- "Très Heureux"
-dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur<4.2] <-"Très Malheureux"
+#On définit arbitrairement ses classes
+
+dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur>=6.6] <- "Très Heureux"
+dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur<4.4] <-"Très Malheureux"
 dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur<5] <-"Malheureux"
-dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur<6.5] <-"Heureux"
+dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur<5.8] <-"Assez Heureux"
+dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur<6.6] <-"Bien Heureux"
 
 
 table(dataBonheurPolitique$Bonheur)
 
-regression3=lm(dataDemocratie$PIB~dataDemocratie$ )
+str(dataBonheurPolitique)
+dataBonheurPolitique$Bonheur=as.factor(dataBonheurPolitique$Bonheur)
+str(dataBonheurPolitique)
+
+regression3=lm(dataBonheurPolitique$PIB~dataBonheurPolitique$Bonheur*dataBonheurPolitique$Democratie)
+
+anova(regression3)
+
+par(mfrow=c(2,2))
+plot(regression3)
+par(mfrow=c(1,1))
+
+#Regarder si la p-value 
+
+
+#On fait une transformation logarithmique pour réduire l'effet trompette
+regression4=lm(log(dataBonheurPolitique$PIB)~dataBonheurPolitique$Bonheur*dataBonheurPolitique$Democratie)
+
+anova(regression4)
+
+par(mfrow=c(2,2))
+plot(regression4)
+par(mfrow=c(1,1))
+
+#Residuals vs Fitted : Les résidus ne semblent pas suivre de pattern
+#Normal Q-Q : Le modèle bien une loi normale
+#Scale Location : Les résidus sont répartis avec une variance égale (homoscédasciticé)
+#Residuals vs Leverage : Les résidus semblent indépendant
+
+#p-value <0.05 : Donc c'est bon
 
 #####################################LDA/QDA######################################
 
@@ -338,36 +418,3 @@ accuracy_RF
 #Il y a très probablement aussi un aspect historique derrière
 
 
-##########################COURBE ROC LDA/QDA####################################
-
-#MARCHE PAS
-
-library(ROCR)
-
-pred_lda <- predict(res_lda,newdata=data.test)$posterior[,2]
-predictions_lda <- prediction(pred_lda,  data.test$Region)
-perf_lda <- performance(predictions_lda , "tpr", "fpr" )
-plot(perf_lda)
-AUC_lda <- performance(predictions_lda,"auc")@y.values[[1]]
-AUC_lda
-
-pred_qda <- predict(res_qda,newdata=data.test)$posterior[,2]
-predictions_qda <- prediction(pred_qda,  data.test$DIFF)
-perf_qda <- performance(predictions_qda , "tpr", "fpr" )
-plot(perf_qda, add=TRUE, col="red")
-
-
-
-############################REGRESSION LOGISTIQUE######################
-library(glmnet)
-
-#MARCHE PAS
-logit.train <- glm(Region ~ ., family = binomial , data=data.train)
-
-res_Lasso <- glmnet(as.matrix(data.train[,-1]),data.train$Region,family='binomial')  
-cvLasso <- cv.glmnet(as.matrix(data.train[,-1]),data.train$Region,family="binomial", type.measure = "class") 
-cvLasso$lambda.min
-
-#####################################################
-
-boxplot(newData$Freedom ~ newData$Family)
