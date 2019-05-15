@@ -7,7 +7,6 @@ require(gplots)
 require(randomForest)
 require(glmnet)
 require(car)
-require(RColorBrewer)
 require(factoextra)
 require(ape)
 require(corrplot)
@@ -116,7 +115,7 @@ pca4 <- PCA(dataACP4)
 
 regression1=lm(data$Liberalisme~data$EsperanceDeVie)
 
-plot(data$EsperanceDeVie,data$Liberalisme)
+plot(data$EsperanceDeVie,data$Liberalisme,xlab="Espérance de Vie",ylab="Libéralisme")
 abline(regression1)
 
 #La corrélation semble bien avéré entre Libéralisme et espérance de vie
@@ -131,7 +130,7 @@ confint(regression1)
 
 regression2=lm(data$Population~data$Bellicisme)
 
-plot(data$Bellicisme,data$Population)
+plot(data$Bellicisme,data$Population,xlab="Bellicisme",ylab="Population")
 abline(regression2)
 
 #La corrélation entre Population et Bellicisme ne semble pas très net
@@ -174,10 +173,12 @@ plot(cah.ward.cr,hang =-1,main="ward.D2")
 rect.hclust(cah.ward.cr,k=6)
 
 #Meilleure visualisation : 
-colors = c("red", "blue", "green", "black","purple","orange")
+colors = c("red", "blue", "green", "pink","purple","orange")
 clus4 = cutree(cah.ward.cr, 6)
-plot(as.phylo(cah.ward.cr), type = "fan", tip.color = colors[clus4],
-     label.offset = 1, cex = 0.5)
+plot(as.phylo(cah.ward.cr), type = "fan", tip.color = colors[clus4],label.offset = 1, cex = 0.8)
+
+plot(as.phylo(cah.ward.cr), type = "radial", tip.color = colors[clus4],label.offset = 0.1,cex=0.7)
+
 
 #liste des groupes
 groupes.6 <- cutree(cah.ward.cr,k=6)
@@ -220,13 +221,13 @@ for (i in 1:K) meansGroupes[i,]<- colMeans(data[groupes.6==i,])
 meansGroupes
 
 par(mfrow=c(2,2))
-barplot(meansGroupes[,"Bonheur"],main="Moyenne de bonheur par groupes du CAH",xlab="Groupes",ylab="Bonheur",col=brewer.pal(n=6,name="Set1"))
+barplot(meansGroupes[,"Bonheur"],main="Moyenne de bonheur",xlab="Groupes",ylab="Bonheur",col=c("red", "blue", "green", "pink","purple","orange"))
 
-barplot(meansGroupes[,"Democratie"],main="Moyenne de democratie par groupes du CAH",xlab="Groupes",ylab="Democratie",col=brewer.pal(n=6,name="Set1"))
+barplot(meansGroupes[,"Democratie"],main="Moyenne de democratie",xlab="Groupes",ylab="Democratie",col=c("red", "blue", "green", "pink","purple","orange"))
 
-barplot(meansGroupes[,"Population"],main="Moyenne de population par groupes du CAH",xlab="Groupes",ylab="Population",col=brewer.pal(n=6,name="Set1"))
+barplot(meansGroupes[,"Population"],main="Moyenne de population",xlab="Groupes",ylab="Population",col=c("red", "blue", "green", "pink","purple","orange"))
 
-barplot(meansGroupes[,"PIB"],main="Moyenne de PIB par groupes du CAH",xlab="Groupes",ylab="PIB",col=brewer.pal(n=6,name="Set1"))
+barplot(meansGroupes[,"PIB"],main="Moyenne de PIB",xlab="Groupes",ylab="PIB",col=c("red", "blue", "green", "pink","purple","orange"))
 par(mfrow=c(1,1))
 
 
@@ -262,7 +263,7 @@ fviz_silhouette(kmeans.result)
 
 #Étudions le bonheur, selon vous qu'est ce qui est important pour être heureux (selon nos variables) ? 
 
-arbreBonheur=rpart(Bonheur~.,data))#,control=rpart.control(cp=0.016))
+arbreBonheur=rpart(Bonheur~.,data)#,control=rpart.control(cp=0.016))
 
 #print(arbre)
 plotcp(arbreBonheur) #On ne va pas l'élaguer car on veut voir les paramètres qui influencent le bonheur
@@ -327,13 +328,13 @@ pie(table(dataDemocratie$Democratie))
 
 ##############################QUELQUES BOXPLOT###############################
 
-boxplot(dataDemocratie$PIB~dataDemocratie$Democratie)
+boxplot(dataDemocratie$PIB~dataDemocratie$Democratie,xlab="Régime Politique",ylab="PIB")
 
 #Dans l'ensemble, les démocraties sont celles avec une meilleure économie
 #Néanmoins, on voit que les résultats pour les régimes Autoritaires sont assez dispercés
 #En revanche, un régime hybride ne permet pas une économie florissante
 
-boxplot(dataDemocratie$Bonheur~dataDemocratie$Democratie)
+boxplot(dataDemocratie$Bonheur~dataDemocratie$Democratie,xlab="Régime Politique",ylab="Bonheur")
 
 #Prévisible, mais bon à rapeller
 
@@ -377,7 +378,7 @@ plot(regression4)
 par(mfrow=c(1,1))
 
 #Residuals vs Fitted : Les résidus ne semblent pas suivre de pattern
-#Normal Q-Q : Le modèle bien une loi normale
+#Normal Q-Q : Le modèle suit bien une loi normale
 #Scale Location : Les résidus sont répartis avec une variance égale (homoscédasciticé)
 #Residuals vs Leverage : Les résidus semblent indépendant
 
