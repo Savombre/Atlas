@@ -20,8 +20,8 @@ data$Bonheur=as.numeric(data$Bonheur)
 data$Democratie=as.character(data$Democratie)
 data$Democratie=as.numeric(data$Democratie)
 
-data$Belliqueux=as.character(data$Belliqueux)
-data$Belliqueux=as.numeric(data$Belliqueux)
+data$Bellicisme=as.character(data$Bellicisme)
+data$Bellicisme=as.numeric(data$Bellicisme)
 
 data$Alphabetisation=as.character(data$Alphabetisation)
 data$Alphabetisation=as.numeric(data$Alphabetisation)
@@ -53,10 +53,12 @@ require(ROCR)
 require(gplots)
 require(randomForest)
 require(glmnet)
+require(car)
 
 #Nombre de pays que l'on analyse (il y en a 194 d'après l'ONU)
 n=NROW(data)
 n
+
 ###########################ACP#######################################
 
 #dataOutRank=subset(data,select=c(6,7,8,9,10))
@@ -90,6 +92,33 @@ pca2 <- PCA(dataACP4)
 
 #On n'observe qu'un petit lien entre bonheur et démocratie
 
+#########################QUELQUES REGRESSIONS########################################
+
+regression1=lm(data$Liberalisme~data$EsperanceDeVie)
+
+plot(data$EsperanceDeVie,data$Liberalisme)
+abline(regression1)
+
+#La corrélation semble bien avéré entre Libéralisme et espérance de vie
+
+summary(regression1)
+
+confint(regression1)
+
+
+#La p-value très largement inférieur à 0.5, le modèle est donc vérifié
+
+
+regression2=lm(data$Population~data$Bellicisme)
+
+plot(data$Bellicisme,data$Population)
+abline(regression2)
+
+#La corrélation entre Population et Bellicisme ne semble pas très net
+
+summary(regression2)
+
+#Ce qui est confirmé par le p-value supérieur à 0.05
 
 ##############################CAH############################
 
@@ -208,7 +237,7 @@ rpart.plot(arbrePIB,type=4)
 
 
 
-############################CLASSIFICATION SUPERVISEE : DEMOCRATIE########################################
+############################VARIABLE QUALITATIVE : DEMOCRATIE########################################
 
 #On va transformer nos indices de démocratie en une variable qualitative
 
@@ -223,6 +252,8 @@ dataDemocratie$Democratie[dataDemocratie$Democratie<4] <-"Régime Autoritaire"
 dataDemocratie$Democratie[dataDemocratie$Democratie<6] <-"Régime Hybride"
 dataDemocratie$Democratie[dataDemocratie$Democratie<8] <-"Démocratie Imparfaite"
 
+#On choisit ses classes selon des stats officiels
+
 #On vérifie que les changements ont bien eu lieu
 table(dataDemocratie$Democratie)
 
@@ -232,6 +263,31 @@ dataDemocratie$Democratie=as.factor(dataDemocratie$Democratie)
 
 str(dataDemocratie)
 
+##############################QUELQUES BOXPLOT###############################
+
+boxplot(dataDemocratie$PIB~dataDemocratie$Democratie)
+
+#Dans l'ensemble, les démocraties sont celles avec une meilleure économie
+#Néanmoins, on voit que les résultats pour les régimes Autoritaires sont assez dispercés
+#En revanche, un régime hybride ne permet pas une économie florissante
+
+boxplot(dataDemocratie$Bonheur~dataDemocratie$Democratie)
+
+#Prévisible, mais bon à rapeller
+
+#############################################
+
+dataBonheurPolitique=subset(dataDemocratie)
+
+dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur>=6.5] <- "Très Heureux"
+dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur<4.2] <-"Très Malheureux"
+dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur<5] <-"Malheureux"
+dataBonheurPolitique$Bonheur[dataBonheurPolitique$Bonheur<6.5] <-"Heureux"
+
+
+table(dataBonheurPolitique$Bonheur)
+
+regression3=lm(dataDemocratie$PIB~dataDemocratie$ )
 
 #####################################LDA/QDA######################################
 
@@ -280,7 +336,6 @@ accuracy_RF
 #On a aussi de mauvais résultats avec randomForest
 #Cela montre que les régimes politiques ne dépend pas des variables que l'on a fixé
 #Il y a très probablement aussi un aspect historique derrière
-
 
 
 ##########################COURBE ROC LDA/QDA####################################
